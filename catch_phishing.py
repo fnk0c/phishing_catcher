@@ -15,11 +15,13 @@ import certstream
 import entropy
 import tqdm
 import yaml
+import elastic_output #Custom Module for elasticsearch output
 from Levenshtein import distance
 from termcolor import colored, cprint
 from tld import get_tld
 
 from confusables import unconfuse
+from datetime import datetime
 
 certstream_url = 'wss://certstream.calidog.io'
 
@@ -69,9 +71,11 @@ def score_domain(domain):
         if words_in_domain[0] in ['com', 'net', 'org']:
             score += 10
 
+    trigger = []
     # Testing keywords
     for word in suspicious['keywords']:
         if word in domain:
+            trigger.append(word)
             score += suspicious['keywords'][word]
 
     # Testing Levenshtein distance for strong keywords (>= 70 points) (ie. paypol)
@@ -89,8 +93,8 @@ def score_domain(domain):
     if domain.count('.') >= 3:
         score += domain.count('.') * 3
 
-    return score
-
+    return score, trigger
+#    return score
 
 def callback(message, context):
     """Callback handler for certstream events."""
@@ -103,6 +107,8 @@ def callback(message, context):
         for domain in all_domains:
             pbar.update(1)
             score = score_domain(domain.lower())
+            KEYWORD = score[1]
+            score = score[0]
 
             # If issued from a free CA = more suspicious
             if "Let's Encrypt" in message['data']['chain'][0]['subject']['aggregated']:
@@ -126,9 +132,9 @@ def callback(message, context):
                     "{} (score={})".format(colored(domain, attrs=['underline']), score))
 
             if score >= 75:
+                elastic_output.write(datetime.now().strftime("%d%m%y%-H%M"), domain, KEYWORD[0])#, blacklist)
                 with open(log_suspicious, 'a') as f:
-                    f.write("{}\n".format(domain))
-
+                    f.write("{}\n".format(domain)
 
 if __name__ == '__main__':
     with open('suspicious.yaml', 'r') as f:
