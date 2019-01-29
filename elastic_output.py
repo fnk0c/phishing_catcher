@@ -12,12 +12,13 @@ def auth():
 
     return(Elasticsearch(HOST, port=PORT, http_auth=(USER, PASS)))
 
-def write(date, domain, keywords):#, blacklist):
+def write(date, domain, keywords, status):#, blacklist):
     
     data = {"domain": domain,
             "date": date,
             "@timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-            "keyword": keywords
+            "keyword": keywords,
+            "status": status
 #            "blacklisted": blacklist
             }
 
