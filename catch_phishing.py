@@ -131,10 +131,10 @@ def callback(message, context):
                     "[+] Potential : "
                     "{} (score={})".format(colored(domain, attrs=['underline']), score))
 
-            if score >= 75:
-                elastic_output.write(datetime.now().strftime("%d%m%y%-H%M"), domain, KEYWORD[0])#, blacklist)
+            if score > 75:
+                elastic_output.write(datetime.now().strftime("%d%m%y%-H%M"), domain, KEYWORD[0], "new")#, blacklist)
                 with open(log_suspicious, 'a') as f:
-                    f.write("{}\n".format(domain)
+                    f.write("{}\n".format(domain))
 
 if __name__ == '__main__':
     with open('suspicious.yaml', 'r') as f:
